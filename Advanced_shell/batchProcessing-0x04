@@ -3,30 +3,34 @@
 # Pokémon list
 POKEMON_LIST=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
 
-# API URL
 API_URL="https://pokeapi.co/api/v2/pokemon"
-
-# Output directory
 OUTPUT_DIR="pokemon_data"
 
-# Create output directory if it doesn't exist
 mkdir -p "$OUTPUT_DIR"
 
-# Function to fetch Pokémon data
-fetch_pokemon() {
-    pokemon=$1
-    echo "Fetching data for $pokemon..."
-    curl -s "$API_URL/$pokemon" -o "$OUTPUT_DIR/$pokemon.json" \
-        && echo "Saved data to $OUTPUT_DIR/$pokemon.json ✅" \
-        || echo "Failed to fetch data for $pokemon ❌"
+# Cleanup function to handle unexpected termination
+cleanup() {
+    echo "Cleaning up background jobs..."
+    jobs -p | xargs -r kill
 }
 
-# Start parallel fetching
+# Trap script exit and signals
+trap cleanup EXIT INT TERM
+
+# Fetch Pokémon data in parallel
 for pokemon in "${POKEMON_LIST[@]}"; do
-    fetch_pokemon "$pokemon" &
+    (
+        echo "Fetching data for $pokemon..."
+        curl -s "$API_URL/$pokemon" -o "$OUTPUT_DIR/$pokemon.json" \
+            && echo "Saved data to $OUTPUT_DIR/$pokemon.json ✅" \
+            || echo "Failed to fetch data for $pokemon ❌"
+    ) &
 done
 
-# Wait for all background processes to complete
+# Show running background jobs
+jobs
+
+# Wait for all background jobs to finish
 wait
 
 echo "All Pokémon data fetched successfully."
