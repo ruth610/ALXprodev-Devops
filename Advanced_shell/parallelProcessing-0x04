@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+# Pokémon list
+POKEMON_LIST=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
+
+# API URL
+API_URL="https://pokeapi.co/api/v2/pokemon"
+
+# Output directory
+OUTPUT_DIR="pokemon_data"
+
+# Create output directory if it doesn't exist
+mkdir -p "$OUTPUT_DIR"
+
+# Function to fetch Pokémon data
+fetch_pokemon() {
+    pokemon=$1
+    echo "Fetching data for $pokemon..."
+    curl -s "$API_URL/$pokemon" -o "$OUTPUT_DIR/$pokemon.json" \
+        && echo "Saved data to $OUTPUT_DIR/$pokemon.json ✅" \
+        || echo "Failed to fetch data for $pokemon ❌"
+}
+
+# Start parallel fetching
+for pokemon in "${POKEMON_LIST[@]}"; do
+    fetch_pokemon "$pokemon" &
+done
+
+# Wait for all background processes to complete
+wait
+
+echo "All Pokémon data fetched successfully."
